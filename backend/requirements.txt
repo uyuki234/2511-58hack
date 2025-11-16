@@ -1,0 +1,7 @@
+opencv-python>=4.6.0
+mediapipe>=0.10.0
+matplotlib>=3.5.0
+numpy>=1.23.0
+
+# Optional (GUI-less / CI): コメントアウトして代わりに使う
+# opencv-python-headless>=4.6.0
