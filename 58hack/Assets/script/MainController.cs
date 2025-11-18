@@ -12,28 +12,21 @@ public class MainController : MonoBehaviour
 
     void Start()
     {
+        this.MockTest("kim.png");
+        this.SendImage();
+    }
+
+    void MockTest(string PATH_TO_IMAGE){
+
         // まずプロジェクト内の Assets/mock/kim.png を探す
-        string filePath = Path.Combine(Application.dataPath, "mock", "kim.png");
+        string filePath = Path.Combine(Application.dataPath, "mock", PATH_TO_IMAGE);
         if (File.Exists(filePath))
         {
             LoadTextureFromFile(filePath);
         }
         else
         {
-            // 見つからなければ Resources フォルダを試す（Assets/Resources/mock/kim.png として配置）
-            Texture2D resTex = Resources.Load<Texture2D>("mock/kim");
-            if (resTex != null)
-            {
-                myTexture = resTex;
-                Debug.Log("Loaded Texture from Resources: mock/kim");
-            }
-            else
-            {
-                Debug.LogError("画像が見つかりませんでした。期待される配置場所:\n" +
-                    "1) Assets/mock/kim.png  または\n" +
-                    "2) Assets/Resources/mock/kim.png (Resources.Load 用)\n" +
-                    "現在の検索パス: " + filePath);
-            }
+            Debug.LogError("Assets/mock 内に" + PATH_TO_IMAGE + "という名前の画像ファイルは見つかりませんでした。");
         }
 
         // Inspector 未割当ならシーン内から自動検索して割り当てを試みる
@@ -50,9 +43,7 @@ public class MainController : MonoBehaviour
 
         // SendImage 呼び出し（myTexture が設定されている場合のみ）
         Debug.Log("postImageScript is " + (postImageScript == null ? "null" : "assigned"));
-        this.SendImage();
     }
-
     void SendImage()
     {
         if (myTexture == null)
