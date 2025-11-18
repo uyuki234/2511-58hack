@@ -19,3 +19,10 @@ pip3 install -r requirements.txt
 ```sh
 uvicorn main:app --reroad
 ```
+
+# 接続テスト
+- openCVに対応している画像形式であれば全て対応
+```sh
+curl --location 'http://127.0.0.1:8000/pointcloud' \
+--form 'file=@"path/to/image.png"'
+```
