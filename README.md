@@ -3,4 +3,4 @@
 
 # [backend](/backend/README.md)
 
-# [backend](/frontend/README.md)
+# [frontend](/frontend/README.md)
