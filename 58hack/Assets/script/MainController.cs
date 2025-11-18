@@ -50,7 +50,7 @@ public class MainController : MonoBehaviour
 
         // SendImage 呼び出し（myTexture が設定されている場合のみ）
         Debug.Log("postImageScript is " + (postImageScript == null ? "null" : "assigned"));
-        SendImage();
+        this.SendImage();
     }
 
     void SendImage()
@@ -84,9 +84,18 @@ public class MainController : MonoBehaviour
     }
 
     // データが返ってきたら実行される関数
+    /// <summary>
+    /// @akiraへ
+    /// ここで写真からVector2を取得した後の処理をかける。
+    /// </summary>
+    /// <param name="points"></param>
     void OnPointCloudReceived(NativeArray<Vector2> points)
     {
         Debug.Log("点群を受け取りました！ 点の数: " + points.Length);
+
+        for(int i = 0 ; i < points.Length ; i++){
+            Debug.Log(points[i]);
+        }
 
         // --- ここでHLSLなどに渡す処理を書く ---
         
@@ -95,9 +104,6 @@ public class MainController : MonoBehaviour
         points.Dispose(); 
     }
 
-    // --------------------------------------------------
-    // 以下: Texture2D を色々な方法で読み込むユーティリティ
-    // --------------------------------------------------
 
     // Resources フォルダから読み込む
     public void LoadTextureFromResources(string resourcePath)
