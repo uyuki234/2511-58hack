@@ -8,40 +8,53 @@ using UnityEngine.Networking;
 public class DataConnector : IDataReceiver
 {
     [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud";
-    [SerializeField] private string imageFileName = "Assets/SamplePicture/generated-image.png";
 
-    IEnumerator IDataReceiver.GetData(Action<PicturePoints> callback)
+    IEnumerator IDataReceiver.GetData(Texture2D img,Action<PicturePoints> callback)
     {
-        string path = ResolveImagePath(imageFileName);
-        Debug.Log($"[DataConnector] Resolved path: {path ?? "NULL"}");
-        return FetchData(path, callback);
+        if (img == null)
+        {
+            Debug.LogWarning("[DataConnector] Texture null.");
+            callback?.Invoke(EmptyPoints());
+            yield break;
+        }
+
+        byte[] fileBytes = null;
+        // try
+        // {
+            fileBytes = img.EncodeToJPG(); // 必要なら EncodeToJPG へ変更可
+        // }
+        // catch (Exception e)
+        // {
+        //     Debug.LogWarning("[DataConnector] Encode failed: " + e.Message);
+        //     callback?.Invoke(EmptyPoints());
+        //     yield break;
+        // }
+
+        if (fileBytes == null || fileBytes.Length == 0)
+        {
+            Debug.LogWarning("[DataConnector] Encoded bytes empty.");
+            callback?.Invoke(EmptyPoints());
+            yield break;
+        }
+
+        yield return PostBytes(fileBytes, "uploaded.jpg", callback);
     }
 
-    public IEnumerator FetchData(string imagePath, Action<PicturePoints> callback)
+    public IEnumerator PostBytes(byte[] fileBytes, string fileName, Action<PicturePoints> callback)
     {
-        if (string.IsNullOrEmpty(imagePath))
+        if (fileBytes == null || fileBytes.Length == 0)
         {
-            Debug.LogWarning("[DataConnector] Image path null/empty.");
+            Debug.LogWarning("[DataConnector] No bytes to upload.");
             callback?.Invoke(EmptyPoints());
             yield break;
         }
-        if (!File.Exists(imagePath))
-        {
-            Debug.LogWarning("[DataConnector] File not found: " + imagePath);
-            callback?.Invoke(EmptyPoints());
-            yield break;
-        }
-
-        byte[] fileBytes;
-        fileBytes = File.ReadAllBytes(imagePath);
-        Debug.Log($"[DataConnector] Read bytes: {fileBytes.Length}");
 
         var form = new WWWForm();
-        form.AddBinaryData("file", fileBytes, Path.GetFileName(imagePath));
+        form.AddBinaryData("file", fileBytes, fileName);
         using (var req = UnityWebRequest.Post(URI, form))
         {
             req.timeout = 10;
-            Debug.Log("[DataConnector] Sending request: " + URI);
+            Debug.Log("[DataConnector] Sending request bytes: " + URI);
             yield return req.SendWebRequest();
 
 #if UNITY_2020_2_OR_NEWER
@@ -65,7 +78,16 @@ public class DataConnector : IDataReceiver
             }
 
             PicturePoints pts;
-            pts = ParsePointCloud(data);
+            // try
+            // {
+                pts = ParsePointCloud(data);
+            // }
+            // catch (Exception ex)
+            // {
+            //     Debug.LogWarning("[DataConnector] Parse error: " + ex.Message);
+            //     callback?.Invoke(EmptyPoints());
+            //     yield break;
+            // }
             Debug.Log($"[DataConnector] Parsed points: {pts.GetPoints().Length}");
             callback?.Invoke(pts);
         }
@@ -106,22 +128,4 @@ public class DataConnector : IDataReceiver
 
     private static float Clamp01(float v) => v < 0f ? 0f : (v > 1f ? 1f : v);
 
-    private static string ResolveImagePath(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return null;
-        if (Path.IsPathRooted(name) && File.Exists(name)) return name;
-        if (File.Exists(name)) return Path.GetFullPath(name);
-
-        string sa = Path.Combine(Application.streamingAssetsPath, name);
-        if (File.Exists(sa)) return sa;
-
-        string pd = Path.Combine(Application.persistentDataPath, name);
-        if (File.Exists(pd)) return pd;
-
-#if UNITY_EDITOR
-        string assets = Path.Combine(Application.dataPath, name);
-        if (File.Exists(assets)) return assets;
-#endif
-        return null;
-    }
 }

@@ -28,7 +28,7 @@ namespace Common
     }
     public interface IDataReceiver
     {
-        public System.Collections.IEnumerator GetData(Action<PicturePoints> callback) ;
+        public System.Collections.IEnumerator GetData(Texture2D img,Action<PicturePoints> callback) ;
 
     }
 }

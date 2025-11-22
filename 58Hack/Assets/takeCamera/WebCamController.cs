@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using Common;
 using UnityEngine;
 using UnityEngine.UI; // UIを扱うために必要
 
@@ -60,7 +62,25 @@ public class WebCamController : MonoBehaviour
 
         Debug.Log("パシャッ！ 撮影しました");
 
-        // ★ここに後で「APIへ送信する処理」を追加します
-        // SendPhotoToApi(photo); みたいな感じです
+        DataConnector connector = new DataConnector();
+        StartCoroutine(((IDataReceiver)connector).GetData(photo,OnPoints));
+    }
+
+    public void OnPoints(PicturePoints points)
+    {
+        Debug.Log("Get Data is Success");
+        if(points == null)
+        {
+            Debug.Log("Points is null . You should check server and Texture2D");
+            return ;
+        }
+        Point[] ps = points.GetPoints() ;
+        for(int i = 0 ; i < Math.Min(ps.Length, 5);i++)
+        {
+            Debug.Log($"position:{ps[i].pos},color:{ps[i].color}");
+        }  
+
+        Debug.Log($"{points.GetResolution()}");
+
     }
 }
