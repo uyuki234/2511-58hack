@@ -7,23 +7,23 @@ public class MainGameManager : MonoBehaviour
     [SerializeField] BulletManager _bulletManager;
     [SerializeField] GameObject _player;
     [Inject] private IDataReceiver _dataReceiver;
+    public static Texture2D targetTexture;
     void Start()
     {
         _bulletManager.Init();
-        _dataReceiver.GetData(null, (x) => Spawn(x));
+        print(targetTexture);
+        StartCoroutine(_dataReceiver.GetData(targetTexture, (x) => Spawn(x)));
     }
     void Spawn(PicturePoints picturePoints)
     {
         Debug.Log("yeah!");
         foreach (var point in picturePoints.GetPoints())
         {
-            _bulletManager.AddBullet(new StandardBullet(point.pos, point.color));
+            _bulletManager.AddBullet(new StandardBullet(new Vector2(point.pos.x - 0.5f, point.pos.y * -1f - 0.5f) * 20, point.color, new Vector2(point.pos.x - 0.5f, point.pos.y - 0.5f).normalized));
         }
     }
     void Update()
     {
-        if (Random.Range(0f, 1f) < 0.1f)
-            _bulletManager.AddBullet(new StandardBullet(Vector2.zero, Color.red));
         _bulletManager.Update(Time.deltaTime);
         UpdatePlayer();
     }

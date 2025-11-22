@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Common;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI; // UIを扱うために必要
 
 public class WebCamController : MonoBehaviour
@@ -62,23 +63,25 @@ public class WebCamController : MonoBehaviour
 
         Debug.Log("パシャッ！ 撮影しました");
 
-        DataConnector connector = new DataConnector();
-        StartCoroutine(((IDataReceiver)connector).GetData(photo,OnPoints));
+        //DataConnector connector = new DataConnector();
+        //StartCoroutine(((IDataReceiver)connector).GetData(photo,OnPoints));
+        MainGameManager.targetTexture = photo;
+        SceneManager.LoadScene("MainGame");
     }
 
     public void OnPoints(PicturePoints points)
     {
         Debug.Log("Get Data is Success");
-        if(points == null)
+        if (points == null)
         {
             Debug.Log("Points is null . You should check server and Texture2D");
-            return ;
+            return;
         }
-        Point[] ps = points.GetPoints() ;
-        for(int i = 0 ; i < Math.Min(ps.Length, 5);i++)
+        Point[] ps = points.GetPoints();
+        for (int i = 0; i < Math.Min(ps.Length, 5); i++)
         {
             Debug.Log($"position:{ps[i].pos},color:{ps[i].color}");
-        }  
+        }
 
         Debug.Log($"{points.GetResolution()}");
 

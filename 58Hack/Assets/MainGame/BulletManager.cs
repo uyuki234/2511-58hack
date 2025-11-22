@@ -70,7 +70,7 @@ internal class BulletRenderer
                 bullets[i].pos.y,
                 0f
             );
-            _matrices[i] = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one);
+            _matrices[i] = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one * 0.5f);
             colors[i] = new Vector4(bullets[i].color.r, bullets[i].color.g, bullets[i].color.b, 1f);
         }
         _propertyBlock.SetVectorArray("_Color", colors);
