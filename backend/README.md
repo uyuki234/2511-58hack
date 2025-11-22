@@ -17,7 +17,7 @@ pip3 install -r requirements.txt
 ```
 # 起動
 ```sh
-uvicorn main:app --reroad
+uvicorn main:app
 ```
 
 # 接続テスト

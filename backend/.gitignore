@@ -1,2 +1,7 @@
-/.venv
-/__pycache__
+venv/
+.venv/
+env/
+.DS_Store
+*.jpg
+*.npy
+__pycache__/
