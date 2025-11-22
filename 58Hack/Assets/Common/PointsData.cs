@@ -24,3 +24,7 @@ public struct Point
     public Color color;
     public Vector2 pos;
 }
+public interface IDataReceiver
+{
+    public PicturePoints GetData();
+}
