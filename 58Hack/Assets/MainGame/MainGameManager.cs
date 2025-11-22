@@ -30,12 +30,15 @@ public class MainGameManager : MonoBehaviour
     void Update()
     {
         if (Random.Range(0f, 1f) < 0.005f)
+        {
+            Vector2 randomOffset = new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f));
             foreach (var point in _picturePoints.GetPoints())
             {
                 Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
                 Vector2 vel = (thePos - average) * 5f;
-                _bulletManager.AddBullet(new StandardBullet(thePos + new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f)), point.color, vel));
+                _bulletManager.AddBullet(new StandardBullet(thePos + randomOffset, point.color, vel));
             }
+        }
         _bulletManager.Update(Time.deltaTime);
         UpdatePlayer();
     }
