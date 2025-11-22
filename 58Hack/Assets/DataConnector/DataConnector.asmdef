@@ -1,0 +1,16 @@
+{
+    "name": "DataConnector",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d479441a2ed0a405781b91a993d89963"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
