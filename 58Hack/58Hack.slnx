@@ -1,4 +1,5 @@
 ﻿<Solution>
   <Project Path="Common.csproj" />
   <Project Path="DataConnector.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
 </Solution>

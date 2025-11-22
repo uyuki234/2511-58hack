@@ -8,48 +8,40 @@ using UnityEngine.Networking;
 public class DataConnector : IDataReceiver
 {
     [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud";
-    [SerializeField] private string imageFileName = "sample.png"; // 送信する画像ファイル名（StreamingAssets 等に配置）
+    [SerializeField] private string imageFileName = "Assets/SamplePicture/generated-image.png";
 
-    // IDataReceiver 実装: 外部からは callback を渡して呼び出す
     IEnumerator IDataReceiver.GetData(Action<PicturePoints> callback)
     {
         string path = ResolveImagePath(imageFileName);
+        Debug.Log($"[DataConnector] Resolved path: {path ?? "NULL"}");
         return FetchData(path, callback);
     }
 
-    // 画像 → サーバ送信 → byte(float32*5N) 受信 → PicturePoints
     public IEnumerator FetchData(string imagePath, Action<PicturePoints> callback)
     {
         if (string.IsNullOrEmpty(imagePath))
         {
+            Debug.LogWarning("[DataConnector] Image path null/empty.");
             callback?.Invoke(EmptyPoints());
             yield break;
         }
         if (!File.Exists(imagePath))
         {
-            Debug.LogWarning("Image not found: " + imagePath);
+            Debug.LogWarning("[DataConnector] File not found: " + imagePath);
             callback?.Invoke(EmptyPoints());
             yield break;
         }
 
         byte[] fileBytes;
-        try
-        {
-            fileBytes = File.ReadAllBytes(imagePath);
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning("Read error: " + e.Message);
-            callback?.Invoke(EmptyPoints());
-            yield break;
-        }
+        fileBytes = File.ReadAllBytes(imagePath);
+        Debug.Log($"[DataConnector] Read bytes: {fileBytes.Length}");
 
         var form = new WWWForm();
         form.AddBinaryData("file", fileBytes, Path.GetFileName(imagePath));
-
         using (var req = UnityWebRequest.Post(URI, form))
         {
             req.timeout = 10;
+            Debug.Log("[DataConnector] Sending request: " + URI);
             yield return req.SendWebRequest();
 
 #if UNITY_2020_2_OR_NEWER
@@ -58,30 +50,23 @@ public class DataConnector : IDataReceiver
             if (req.isHttpError || req.isNetworkError)
 #endif
             {
-                Debug.LogWarning("Request failed: " + req.error);
+                Debug.LogWarning("[DataConnector] Request failed: " + req.error);
                 callback?.Invoke(EmptyPoints());
                 yield break;
             }
 
             byte[] data = req.downloadHandler.data;
+            Debug.Log($"[DataConnector] Received bytes: {(data == null ? 0 : data.Length)}");
             if (data == null || data.Length == 0)
             {
-                Debug.LogWarning("Empty response.");
+                Debug.LogWarning("[DataConnector] Empty response.");
                 callback?.Invoke(EmptyPoints());
                 yield break;
             }
 
             PicturePoints pts;
-            try
-            {
-                pts = ParsePointCloud(data);
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("Parse error: " + e.Message);
-                pts = EmptyPoints();
-            }
-
+            pts = ParsePointCloud(data);
+            Debug.Log($"[DataConnector] Parsed points: {pts.GetPoints().Length}");
             callback?.Invoke(pts);
         }
     }
@@ -89,34 +74,31 @@ public class DataConnector : IDataReceiver
     private static PicturePoints ParsePointCloud(byte[] bytes)
     {
         int floatCount = bytes.Length / 4;
-        if (floatCount == 0 || floatCount % 5 != 0)
+        if (floatCount == 0 || floatCount % 6 != 0)
             throw new Exception("Invalid float count: " + floatCount);
 
         float[] floats = new float[floatCount];
         Buffer.BlockCopy(bytes, 0, floats, 0, bytes.Length);
 
-        int pointCount = floatCount / 5;
+        int pointCount = floatCount / 6;
         var points = new Point[pointCount];
 
         for (int i = 0; i < pointCount; i++)
         {
-            int idx = i * 5;
-            // 既に正規化されている前提。念のため軽い clamp。
+            int idx = i * 6;
             float x = Clamp01(floats[idx]);
             float y = Clamp01(floats[idx + 1]);
-            float r = Clamp01(floats[idx + 2]);
-            float g = Clamp01(floats[idx + 3]);
-            float b = Clamp01(floats[idx + 4]);
-
+            // z is at floats[idx + 2], but we ignore it.
+            float r = Clamp01(floats[idx + 3]);
+            float g = Clamp01(floats[idx + 4]);
+            float b = Clamp01(floats[idx + 5]);
             points[i] = new Point
             {
                 pos = new Vector2(x, y),
                 color = new Color(r, g, b, 1f)
             };
         }
-
-        // 解像度は暫定値
-        return new PicturePoints(points, new Vector2Int(1, 1));
+        return new PicturePoints(points, new Vector2Int(1, 1)); // 解像度仮
     }
 
     private static PicturePoints EmptyPoints() =>

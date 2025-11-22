@@ -39,8 +39,6 @@ def get_human_points_from_bytes(image_bytes: bytes):
         pts.append([x, y, z, r, g, b])
 
     return np.array(pts, dtype=np.float32)
-
-
 # ====== 物体（AKAZE特徴点・色付き） ======
 def get_object_points_from_bytes(image_bytes: bytes):
     nparr = np.frombuffer(image_bytes, np.uint8)
