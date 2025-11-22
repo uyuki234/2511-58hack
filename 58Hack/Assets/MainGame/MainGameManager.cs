@@ -8,6 +8,8 @@ public class MainGameManager : MonoBehaviour
     [SerializeField] GameObject _player;
     [Inject] private IDataReceiver _dataReceiver;
     public static Texture2D targetTexture;
+    private PicturePoints _picturePoints;
+    Vector2 average;
     void Start()
     {
         _bulletManager.Init();
@@ -16,14 +18,27 @@ public class MainGameManager : MonoBehaviour
     }
     void Spawn(PicturePoints picturePoints)
     {
-        Debug.Log("yeah!");
-        foreach (var point in picturePoints.GetPoints())
+        _picturePoints = picturePoints;
+        Vector2 sum = Vector2.zero;
+        foreach (var point in _picturePoints.GetPoints())
         {
-            _bulletManager.AddBullet(new StandardBullet(new Vector2(point.pos.x - 0.5f, point.pos.y * -1f - 0.5f) * 20, point.color, new Vector2(point.pos.x - 0.5f, point.pos.y - 0.5f).normalized));
+            sum += new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
         }
+        sum /= _picturePoints.GetPoints().Length;
+        average = sum;
     }
     void Update()
     {
+        if (Random.Range(0f, 1f) < 0.005f)
+        {
+            Vector2 randomOffset = new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f));
+            foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new StandardBullet(thePos + randomOffset, point.color, vel));
+            }
+        }
         _bulletManager.Update(Time.deltaTime);
         UpdatePlayer();
     }
