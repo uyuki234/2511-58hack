@@ -1,5 +1,13 @@
 ﻿<Solution>
+  <Project Path="Zenject.csproj" />
+  <Project Path="Zenject-IntegrationTests-Editor.csproj" />
+  <Project Path="Zenject-ReflectionBaking-Editor.csproj" />
+  <Project Path="Zenject-UnitTests-Editor.csproj" />
+  <Project Path="Zenject-Editor.csproj" />
+  <Project Path="Zenject-IntegrationTests.csproj" />
   <Project Path="Common.csproj" />
+  <Project Path="Zenject-TestFramework.csproj" />
+  <Project Path="Zenject-PoolMonitor-Editor.csproj" />
   <Project Path="MainGame.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="DataConnector.csproj" />
