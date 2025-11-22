@@ -1,2 +1,7 @@
 ﻿<Solution>
+<<<<<<< HEAD
+=======
+  <Project Path="Common.csproj" />
+  <Project Path="MainGame.csproj" />
+>>>>>>> 49dd7bedf7eef5feb33b31faa0fb767f201d4c28
 </Solution>
