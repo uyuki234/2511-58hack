@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Common
+{
 public class PicturePoints
 {
     private Point[] _points;
@@ -27,4 +29,5 @@ public struct Point
 public interface IDataReceiver
 {
     public PicturePoints GetData();
+}
 }
