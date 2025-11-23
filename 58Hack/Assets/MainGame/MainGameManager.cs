@@ -97,10 +97,15 @@ public class MainGameManager : MonoBehaviour
         if (dragging && isDown)
         {
             Vector3 delta = currentPos - prevPos;
+            float z = Camera.main.nearClipPlane; // 0 でもOK
+
+            Vector3 worldDelta =
+                Camera.main.ScreenToWorldPoint(Input.mousePosition + new Vector3(0, 0, z)) -
+                Camera.main.ScreenToWorldPoint(prevPos + new Vector3(0, 0, z));
 
             // 画面上の変化量をワールドに適用
             // ※必要に応じてスケール調整
-            _player.transform.position += new Vector3(delta.x, delta.y, 0) * 0.01f;
+            _player.transform.position += worldDelta;
 
             prevPos = currentPos;
         }
@@ -120,6 +125,6 @@ public class MainGameManager : MonoBehaviour
     }
     void Hit()
     {
-        
+
     }
 }
