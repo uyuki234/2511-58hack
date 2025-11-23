@@ -103,7 +103,7 @@ def get_human_points(image_bytes):
 
             # バイナリ形式で詰める (x,y,z,r,g,b,ID)
             output_bytes += struct.pack(
-                "ffffffI",
+                "<ffffffI",  # 先頭に '<' を付けて little-endian 明示
                 x, y, z, r, g, b, part_id
             )
 
@@ -138,7 +138,7 @@ def get_object_points(image_bytes):
         r, g, b = (bgr[::-1] / 255.0)
 
         output_bytes += struct.pack(
-            "ffffffI",
+            "<ffffffI",
             x, y, z, r, g, b, cid
         )
 
