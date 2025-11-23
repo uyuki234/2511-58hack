@@ -8,9 +8,9 @@ app = FastAPI()
 
 mp_face_mesh = mp.solutions.face_mesh
 
-# -------------------------
-# 6部位の固定 ID と色
-# -------------------------
+# ============================
+# 6部位の固定 ID
+# ============================
 PART_ID = {
     "righteye": 1,
     "lefteye": 2,
@@ -20,19 +20,9 @@ PART_ID = {
     "leftear": 6,
 }
 
-PART_COLOR = {
-    "righteye": (1.0, 0.0, 0.0),     # red
-    "lefteye": (0.0, 1.0, 0.0),      # green
-    "nose": (0.0, 0.0, 1.0),         # blue
-    "mouth": (1.0, 1.0, 0.0),        # yellow
-    "rightear": (1.0, 0.0, 1.0),     # magenta
-    "leftear": (0.0, 1.0, 1.0),      # cyan
-}
-
-# =============================
-# 468点を6部位に分類（精密モデル）
-# =============================
-
+# ============================
+# 468点 → 6部位分類
+# ============================
 RIGHT_EYE_IDX = set([33, 133, 160, 158, 159, 144, 145, 153])
 LEFT_EYE_IDX  = set([362, 263, 387, 385, 386, 373, 374, 380])
 NOSE_IDX = set([1, 2, 98, 97, 327, 168])
@@ -41,8 +31,9 @@ MOUTH_IDX = set([13, 14, 308, 324, 78, 82, 87])
 RIGHT_EAR_IDX = set([234, 93, 132, 58])
 LEFT_EAR_IDX  = set([454, 323, 361, 288])
 
+
 def classify_part(i):
-    """468点すべてを6部位に分類"""
+    """468点を6部位へ分類"""
     if i in RIGHT_EYE_IDX: return "righteye"
     if i in LEFT_EYE_IDX:  return "lefteye"
     if i in NOSE_IDX:      return "nose"
@@ -50,13 +41,30 @@ def classify_part(i):
     if i in RIGHT_EAR_IDX: return "rightear"
     if i in LEFT_EAR_IDX:  return "leftear"
 
-    # 残り点 → 左右耳に均等分類
+    # その他の点 → 左右耳へ割り振り
     return "rightear" if i < 234 else "leftear"
 
 
-# =============================
-# 人間 → 468点（28byte）
-# =============================
+# ============================
+# 彩度を上げる処理
+# ============================
+def boost_saturation(bgr, factor=2.5):
+    """BGR → 彩度ブースト → RGB(0〜1)"""
+    bgr = np.array(bgr, dtype=np.uint8).reshape(1, 1, 3)
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV).astype(np.float32)
+
+    # S（彩度）を増加
+    hsv[..., 1] *= factor
+    hsv[..., 1] = np.clip(hsv[..., 1], 0, 255)
+
+    rgb = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
+    r, g, b = rgb[0, 0]
+    return r / 255.0, g / 255.0, b / 255.0
+
+
+# ============================
+# 人間 → 468点 点群出力
+# ============================
 def get_human_points(image_bytes):
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -76,20 +84,27 @@ def get_human_points(image_bytes):
     if not results.multi_face_landmarks:
         return None
 
-    output = bytearray()
     face = results.multi_face_landmarks[0]
+    output = bytearray()
 
     for i, lm in enumerate(face.landmark):
+        px = int(lm.x * (w - 1))
+        py = int(lm.y * (h - 1))
+
+        # 画像からそのまま BGR 取得
+        bgr = img[py, px]
+        r, g, b = boost_saturation(bgr)  # 彩度アップ版
+
+        # 部位 ID
+        part = classify_part(i)
+        ID = PART_ID[part]
+
+        # 座標
         x = lm.x * w
         y = lm.y * h
         z = lm.z
 
-        part = classify_part(i)
-
-        ID = PART_ID[part]
-        r, g, b = PART_COLOR[part]   # ★ float(0〜1) に統一済み
-
-        # f f f f f f I → 28 byte
+        # 28byte
         output += struct.pack(
             "ffffffI",
             float(x), float(y), float(z),
@@ -100,38 +115,25 @@ def get_human_points(image_bytes):
     return bytes(output)
 
 
-# =============================
-# 物体（元のまま）
-# =============================
+# ============================
+# 物体（元のまま＋彩度ブースト）
+# ============================
 def classify_color(bgr):
     b, g, r = bgr.astype(int)
-    if max(r, g, b) < 40:
-        return "black"
-    if min(r, g, b) > 200:
-        return "white"
-
+    if max(r, g, b) < 40: return "black"
+    if min(r, g, b) > 200: return "white"
     if r > g and r > b:
-        if g > b: return "yellow"
-        else: return "magenta"
+        return "yellow" if g > b else "magenta"
     if g > r and g > b:
-        if r > b: return "yellow"
-        else: return "cyan"
+        return "yellow" if r > b else "cyan"
     if b > r and b > g:
-        if r > g: return "magenta"
-        else: return "blue"
-
+        return "magenta" if r > g else "blue"
     return "red"
 
 
 COLOR_IDS = {
-    "red": 1,
-    "green": 2,
-    "blue": 3,
-    "yellow": 4,
-    "cyan": 5,
-    "magenta": 6,
-    "white": 7,
-    "black": 8
+    "red": 1, "green": 2, "blue": 3, "yellow": 4,
+    "cyan": 5, "magenta": 6, "white": 7, "black": 8
 }
 
 
@@ -155,13 +157,14 @@ def get_object_points(image_bytes):
         z = 0.0
 
         bgr = color[int(y_px), int(x_px)]
+        r, g, b = boost_saturation(bgr)  # 彩度アップ
+
         cname = classify_color(bgr)
         cid = COLOR_IDS[cname]
-        r, g, b = (bgr[::-1] / 255.0)
 
         output += struct.pack(
             "ffffffI",
-            x, y, z,
+            float(x), float(y), float(z),
             float(r), float(g), float(b),
             int(cid)
         )
@@ -169,18 +172,16 @@ def get_object_points(image_bytes):
     return bytes(output)
 
 
-# =============================
+# ============================
 # API
-# =============================
+# ============================
 @app.post("/pointcloud")
 async def pointcloud(file: UploadFile = File(...)):
     image_bytes = await file.read()
 
-    # 人間（468点）が検出できたらこちら
     human = get_human_points(image_bytes)
     if human is not None:
         return Response(content=human, media_type="application/octet-stream")
 
-    # 人間でなければ物体分類
     obj = get_object_points(image_bytes)
     return Response(content=obj, media_type="application/octet-stream")
