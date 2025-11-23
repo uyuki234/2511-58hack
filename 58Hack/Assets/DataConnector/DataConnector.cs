@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 public class DataConnector : IDataReceiver
 {
-    [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud2"; // ← https を http に
+    [SerializeField] private string URI = "https://two511-58hack-1.onrender.com/pointcloud2"; // ← https を http に
 
     IEnumerator IDataReceiver.GetData(Texture2D img,Action<PicturePoints> callback)
     {
