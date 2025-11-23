@@ -3,7 +3,7 @@ using System.Collections;
 using Common;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI; // UIを扱うために必要
+using UnityEngine.UI;
 
 public class WebCamController : MonoBehaviour
 {
@@ -11,8 +11,9 @@ public class WebCamController : MonoBehaviour
     public RawImage displayImage; // カメラ映像を映す場所（RawImage）
 
     WebCamTexture webCamTexture;
+    WebCamDevice[] devices;
+    int currentCameraIndex = 0; // 現在のカメラ
 
-    // ゲーム開始時に自動で動く
     IEnumerator Start()
     {
         // 1. ユーザーにカメラ許可を求める
@@ -21,29 +22,24 @@ public class WebCamController : MonoBehaviour
         if (Application.HasUserAuthorization(UserAuthorization.WebCam))
         {
             // 2. カメラデバイスを探す
-            WebCamDevice[] devices = WebCamTexture.devices;
+            devices = WebCamTexture.devices;
             if (devices.Length == 0)
             {
                 Debug.LogError("カメラが見つかりません");
                 yield break;
             }
 
-            // 3. 使うカメラを決める（スマホなら背面、PCならデフォルト）
-            string cameraName = devices[0].name;
+            // 3. 最初に背面カメラを選択
             for (int i = 0; i < devices.Length; i++)
             {
-                if (!devices[i].isFrontFacing) // 背面カメラを優先
+                if (!devices[i].isFrontFacing)
                 {
-                    cameraName = devices[i].name;
+                    currentCameraIndex = i;
                     break;
                 }
             }
 
-            // 4. カメラを起動してRawImageにセットする
-            // ※サイズは仮で1280x720にしていますが、スマホに合わせて調整されます
-            webCamTexture = new WebCamTexture(cameraName, 1280, 720);
-            displayImage.texture = webCamTexture;
-            webCamTexture.Play(); // 撮影開始！
+            StartCamera(currentCameraIndex);
         }
         else
         {
@@ -51,20 +47,38 @@ public class WebCamController : MonoBehaviour
         }
     }
 
-    // ボタンが押されたら動く関数
+    void StartCamera(int index)
+    {
+        if (webCamTexture != null)
+        {
+            webCamTexture.Stop();
+        }
+
+        webCamTexture = new WebCamTexture(devices[index].name, 1280, 720);
+        displayImage.texture = webCamTexture;
+        webCamTexture.Play();
+    }
+
+    // ボタンから呼び出す「次のカメラに切り替え」
+    public void NextCamera()
+    {
+        if (devices == null || devices.Length == 0) return;
+
+        currentCameraIndex = (currentCameraIndex + 1) % devices.Length;
+        StartCamera(currentCameraIndex);
+        Debug.Log("カメラを切り替えました: " + devices[currentCameraIndex].name);
+    }
+
     public void OnClickShutter()
     {
         if (webCamTexture == null || !webCamTexture.isPlaying) return;
 
-        // 撮影（テクスチャを切り出す）
         Texture2D photo = new Texture2D(webCamTexture.width, webCamTexture.height);
         photo.SetPixels(webCamTexture.GetPixels());
         photo.Apply();
 
         Debug.Log("パシャッ！ 撮影しました");
 
-        //DataConnector connector = new DataConnector();
-        //StartCoroutine(((IDataReceiver)connector).GetData(photo,OnPoints));
         MainGameManager.targetTexture = photo;
         SceneManager.LoadScene("MainGame");
     }
@@ -84,6 +98,5 @@ public class WebCamController : MonoBehaviour
         }
 
         Debug.Log($"{points.GetResolution()}");
-
     }
 }

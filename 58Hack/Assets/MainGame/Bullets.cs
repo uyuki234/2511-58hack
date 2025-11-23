@@ -55,6 +55,10 @@ public class GravityBullet : Bullet
         {
             isExploded = true;
             this.vel = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)) * 15f;
+            if (Random.Range(0f, 1f) < 0.75f)
+            {
+                this.Destroy();
+            }
         }
     }
 }
