@@ -4,14 +4,16 @@ using Zenject;
 
 public class MainGameManager : MonoBehaviour
 {
-    [SerializeField] BulletManager _bulletManager;
-    [SerializeField] GameObject _player;
+    [SerializeField] BulletManager _bulletManager; [SerializeField] public GameObject _player;
     [Inject] private IDataReceiver _dataReceiver;
     public static Texture2D targetTexture;
     private PicturePoints _picturePoints;
+    private float hitCooldownCounter;
     Vector2 average;
+    public static MainGameManager Instance;
     void Start()
     {
+        MainGameManager.Instance = this;
         _bulletManager.Init();
         print(targetTexture);
         StartCoroutine(_dataReceiver.GetData(targetTexture, (x) => Spawn(x)));
@@ -31,12 +33,18 @@ public class MainGameManager : MonoBehaviour
     {
         if (Random.Range(0f, 1f) < 0.005f)
         {
-            Vector2 randomOffset = new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f));
-            foreach (var point in _picturePoints.GetPoints())
+            Vector2 randomOffset = new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f) + 5f);
+            /*foreach (var point in _picturePoints.GetPoints())
             {
                 Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
                 Vector2 vel = (thePos - average) * 5f;
                 _bulletManager.AddBullet(new StandardBullet(thePos + randomOffset, point.color, vel));
+            }*/
+            foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new ChaseBullet(thePos + randomOffset, point.color));
             }
         }
         _bulletManager.Update(Time.deltaTime);
@@ -103,9 +111,15 @@ public class MainGameManager : MonoBehaviour
             dragging = false;
         }
 
-        if (_bulletManager.GetIsPointInBullet(_player.transform.position))
+        hitCooldownCounter -= Time.deltaTime;
+        if (hitCooldownCounter < 0f && _bulletManager.GetIsPointInBullet(_player.transform.position))
         {
-            print("hit!");
+            Hit();
+            hitCooldownCounter = 3f;
         }
+    }
+    void Hit()
+    {
+        
     }
 }
