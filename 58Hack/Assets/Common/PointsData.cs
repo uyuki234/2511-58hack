@@ -25,6 +25,7 @@ namespace Common
     {
         public Color color;
         public Vector2 pos;
+        public int id ;
     }
     public interface IDataReceiver
     {
