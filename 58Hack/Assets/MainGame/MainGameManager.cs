@@ -24,6 +24,9 @@ public class MainGameManager : MonoBehaviour
     public static MainGameManager Instance;
     public static int lastFaceCount;
 
+    float coolTime = 3f;
+    float time = 0f;
+
     List<System.Action<Vector2, PicturePoints>> bulletPatternes;
     void Start()
     {
@@ -98,7 +101,8 @@ public class MainGameManager : MonoBehaviour
     }
     void Update()
     {
-        if (Random.Range(0f, 1f) < 0.005f)
+        coolTime -= Time.deltaTime;
+        if (coolTime < 0f)
         {
             Vector2 randomOffset = new Vector2(Random.Range(-10f, 10f), Random.Range(-1f, 1f) + 5f);
             /*foreach (var point in _picturePoints.GetPoints())
@@ -110,9 +114,11 @@ public class MainGameManager : MonoBehaviour
             bulletPatternes[Random.Range(0, bulletPatternes.Count)](randomOffset, _picturePoints);
             faces += 1;
             tmp.text = $"{faces} faces!";
+            coolTime = 5 - Mathf.Pow(time, 0.3f);
         }
         _bulletManager.Update(Time.deltaTime);
         UpdatePlayer();
+        time += Time.deltaTime;
     }
     Vector3 prevPos;
     bool dragging = false;
