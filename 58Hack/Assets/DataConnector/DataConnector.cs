@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 
 public class DataConnector : IDataReceiver
 {
-    [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud"; // ← https を http に
+    [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud2"; // ← https を http に
 
     IEnumerator IDataReceiver.GetData(Texture2D img,Action<PicturePoints> callback)
     {
@@ -97,7 +97,7 @@ public class DataConnector : IDataReceiver
 
     private static PicturePoints ParsePointCloud(byte[] bytes)
     {
-        const int bytesPerPoint = 28; // 6 floats + 1 uint32
+        const int bytesPerPoint = 28 ; // 6 floats + 1 uint32
         if (bytes.Length == 0 || bytes.Length % bytesPerPoint != 0)
             throw new Exception("Invalid byte length: " + bytes.Length);
 
