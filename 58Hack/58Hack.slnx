@@ -7,8 +7,8 @@
   <Project Path="Zenject-IntegrationTests.csproj" />
   <Project Path="Common.csproj" />
   <Project Path="Zenject-TestFramework.csproj" />
-  <Project Path="Zenject-PoolMonitor-Editor.csproj" />
   <Project Path="MainGame.csproj" />
+  <Project Path="Zenject-PoolMonitor-Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="DataConnector.csproj" />
 </Solution>

@@ -7,7 +7,7 @@ public class BulletManager
 {
     [SerializeField] private Mesh _mesh;
     [SerializeField] private Material _material;
-    private List<Bullet> _bullets;
+    public List<Bullet> _bullets;
     BulletRenderer _bulletRenderer;
     public void Init()
     {

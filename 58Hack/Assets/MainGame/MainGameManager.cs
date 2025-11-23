@@ -1,25 +1,92 @@
+using System.Collections.Generic;
 using Common;
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 using Zenject;
 
 public class MainGameManager : MonoBehaviour
 {
     [SerializeField] BulletManager _bulletManager; [SerializeField] public GameObject _player;
+    [SerializeField] HeartsUI _heartsUI;
+    [SerializeField] TextMeshProUGUI tmp;
+    [SerializeField] TextMeshProUGUI debug;
+    [SerializeField] AudioClip ac;
+    [SerializeField] AudioSource aS;
+    int faces = 0;
+    int heart = 3;
     [Inject] private IDataReceiver _dataReceiver;
     public static Texture2D targetTexture;
     private PicturePoints _picturePoints;
     private float hitCooldownCounter;
     Vector2 average;
     public static MainGameManager Instance;
+    public static int lastFaceCount;
+
+    List<System.Action<Vector2, PicturePoints>> bulletPatternes;
     void Start()
     {
         MainGameManager.Instance = this;
         _bulletManager.Init();
         print(targetTexture);
+        debug.text = targetTexture.width + ":" + targetTexture.height;
         StartCoroutine(_dataReceiver.GetData(targetTexture, (x) => Spawn(x)));
+        heart = 3;
+
+        bulletPatternes = new List<System.Action<Vector2, PicturePoints>>()
+    {
+      (randomOffset, _picturePoints) =>
+      {
+        foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new ChaseBullet(thePos + randomOffset, point.color));
+            }
+      },
+      (randomOffset, _picturePoints) =>
+      {
+        foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new GravityBullet(thePos + randomOffset, point.color));
+            }
+      },
+      (randomOffset, _picturePoints) =>
+      {
+        foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new SnakeBullet(thePos + randomOffset, point.color));
+            }
+      },
+      (randomOffset, _picturePoints) =>
+      {
+        foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new RotateBullet(thePos + randomOffset, point.color, randomOffset));
+            }
+      },
+      (randomOffset, _picturePoints) =>
+      {
+        foreach (var point in _picturePoints.GetPoints())
+            {
+                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
+                Vector2 vel = (thePos - average) * 5f;
+                _bulletManager.AddBullet(new StandardBullet(thePos + randomOffset, point.color, vel));
+            }
+      }
+    };
+
     }
     void Spawn(PicturePoints picturePoints)
     {
+        Debug.Log(targetTexture.width + ":" + targetTexture.height);
         _picturePoints = picturePoints;
         Vector2 sum = Vector2.zero;
         foreach (var point in _picturePoints.GetPoints())
@@ -40,12 +107,9 @@ public class MainGameManager : MonoBehaviour
                 Vector2 vel = (thePos - average) * 5f;
                 _bulletManager.AddBullet(new StandardBullet(thePos + randomOffset, point.color, vel));
             }*/
-            foreach (var point in _picturePoints.GetPoints())
-            {
-                Vector2 thePos = new Vector2(point.pos.x - 0.5f, point.pos.y * (-1f) + 1f) * 20;
-                Vector2 vel = (thePos - average) * 5f;
-                _bulletManager.AddBullet(new ChaseBullet(thePos + randomOffset, point.color));
-            }
+            bulletPatternes[Random.Range(0, bulletPatternes.Count)](randomOffset, _picturePoints);
+            faces += 1;
+            tmp.text = $"{faces} faces!";
         }
         _bulletManager.Update(Time.deltaTime);
         UpdatePlayer();
@@ -123,8 +187,37 @@ public class MainGameManager : MonoBehaviour
             hitCooldownCounter = 3f;
         }
     }
+    System.Collections.IEnumerator ShakeCamera(Transform cam, float duration, float magnitude)
+    {
+        Vector3 originalPos = cam.localPosition;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            cam.localPosition = originalPos + (Vector3)Random.insideUnitCircle * magnitude;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        cam.localPosition = originalPos;
+    }
     void Hit()
     {
-
+        if (heart > 0)
+        {
+            _heartsUI.RemoveHeart();
+            heart -= 1;
+            aS.PlayOneShot(ac);
+            StartCoroutine(ShakeCamera(Camera.main.transform, 0.5f, 0.5f));
+            /*foreach (var bullet in _bulletManager._bullets)
+            {
+                bullet.Destroy();
+            }*/
+        }
+        if (heart <= 0)
+        {
+            lastFaceCount = faces;
+            SceneManager.LoadScene("Result");
+        }
     }
 }
