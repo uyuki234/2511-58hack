@@ -6,9 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+<<<<<<< HEAD
     path: Assets/Scenes/TakePicture.unity
     guid: 581bf283b82884c31943e7883de3a901
   - enabled: 1
+=======
+>>>>>>> 8e91c58456214d16021dbed44200ad216e465ea2
     path: Assets/Defaults/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
