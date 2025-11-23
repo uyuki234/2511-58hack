@@ -8,24 +8,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TakePicture.unity
     guid: 581bf283b82884c31943e7883de3a901
-<<<<<<< HEAD
   - enabled: 1
     path: Assets/Defaults/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 1
-    path: Assets/Scenes/MainGame.unity
-    guid: 0cf53b03514694c51a703c8567cfe622
-=======
   - enabled: 1
     path: Assets/Scenes/MainGame.unity
     guid: 0cf53b03514694c51a703c8567cfe622
   - enabled: 1
     path: Assets/Scenes/Result.unity
     guid: bc707382caa3445a38d17405a90877b9
-  - enabled: 1
-    path: Assets/Defaults/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
->>>>>>> 38324db480cbb73acb44d0d12c70ae22a5bcfa3c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
