@@ -4,9 +4,12 @@ using Common;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI; // UIを扱うために必要
+using System.Runtime.InteropServices;
 
 public class WebCamController : MonoBehaviour
 {
+    [DllImport("__Internal")]
+    private static extern void GetBackCameraStream();
     [Header("画面上の設定")]
     public RawImage displayImage; // カメラ映像を映す場所（RawImage）
 
@@ -15,12 +18,17 @@ public class WebCamController : MonoBehaviour
     // ゲーム開始時に自動で動く
     IEnumerator Start()
     {
-        // 1. ユーザーにカメラ許可を求める
+#if UNITY_WEBGL && !UNITY_EDITOR
+    // WebGL（iPhone Safari）では JS 側で背面カメラを取得
+    GetBackCameraStream();
+    yield break;  // WebCamTexture は使わない
+#endif
+
+        // ↓ ここからはネイティブアプリ用（iOSアプリ/Android）
         yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
 
         if (Application.HasUserAuthorization(UserAuthorization.WebCam))
         {
-            // 2. カメラデバイスを探す
             WebCamDevice[] devices = WebCamTexture.devices;
             if (devices.Length == 0)
             {
@@ -28,28 +36,26 @@ public class WebCamController : MonoBehaviour
                 yield break;
             }
 
-            // 3. 使うカメラを決める（スマホなら背面、PCならデフォルト）
             string cameraName = devices[0].name;
             for (int i = 0; i < devices.Length; i++)
             {
-                if (!devices[i].isFrontFacing) // 背面カメラを優先
+                if (!devices[i].isFrontFacing)
                 {
                     cameraName = devices[i].name;
                     break;
                 }
             }
 
-            // 4. カメラを起動してRawImageにセットする
-            // ※サイズは仮で1280x720にしていますが、スマホに合わせて調整されます
             webCamTexture = new WebCamTexture(cameraName, 1280, 720);
             displayImage.texture = webCamTexture;
-            webCamTexture.Play(); // 撮影開始！
+            webCamTexture.Play();
         }
         else
         {
             Debug.LogError("カメラの許可がありません");
         }
     }
+
 
     // ボタンが押されたら動く関数
     public void OnClickShutter()
