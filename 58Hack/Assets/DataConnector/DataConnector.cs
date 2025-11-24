@@ -7,41 +7,56 @@ using UnityEngine.Networking;
 
 public class DataConnector : IDataReceiver
 {
-    [SerializeField] private string URI = "http://127.0.0.1:8000/pointcloud";
-    [SerializeField] private string imageFileName = "Assets/SamplePicture/generated-image.png";
+    [SerializeField] private string URI = "https://two511-58hack-1.onrender.com/pointcloud2"; // ← https を http に
 
-    IEnumerator IDataReceiver.GetData(Action<PicturePoints> callback)
+    IEnumerator IDataReceiver.GetData(Texture2D img,Action<PicturePoints> callback)
     {
-        string path = ResolveImagePath(imageFileName);
-        Debug.Log($"[DataConnector] Resolved path: {path ?? "NULL"}");
-        return FetchData(path, callback);
+        if (img == null)
+        {
+            Debug.LogWarning("[DataConnector] Texture null.");
+            callback?.Invoke(EmptyPoints());
+            yield break;
+        }
+
+        byte[] fileBytes = null;
+        // try
+        // {
+            fileBytes = img.EncodeToJPG(); // 必要なら EncodeToJPG へ変更可
+        // }
+        // catch (Exception e)
+        // {
+        //     Debug.LogWarning("[DataConnector] Encode failed: " + e.Message);
+        //     callback?.Invoke(EmptyPoints());
+        //     yield break;
+        // }
+
+        if (fileBytes == null || fileBytes.Length == 0)
+        {
+            Debug.LogWarning("[DataConnector] Encoded bytes empty.");
+            callback?.Invoke(EmptyPoints());
+            yield break;
+        }
+
+        yield return PostBytes(fileBytes, "uploaded.jpg", callback);
     }
 
-    public IEnumerator FetchData(string imagePath, Action<PicturePoints> callback)
+    public IEnumerator PostBytes(byte[] fileBytes, string fileName, Action<PicturePoints> callback)
     {
-        if (string.IsNullOrEmpty(imagePath))
+        if (fileBytes == null || fileBytes.Length == 0)
         {
-            Debug.LogWarning("[DataConnector] Image path null/empty.");
+            Debug.LogWarning("[DataConnector] No bytes to upload.");
             callback?.Invoke(EmptyPoints());
             yield break;
         }
-        if (!File.Exists(imagePath))
-        {
-            Debug.LogWarning("[DataConnector] File not found: " + imagePath);
-            callback?.Invoke(EmptyPoints());
-            yield break;
-        }
-
-        byte[] fileBytes;
-        fileBytes = File.ReadAllBytes(imagePath);
-        Debug.Log($"[DataConnector] Read bytes: {fileBytes.Length}");
 
         var form = new WWWForm();
-        form.AddBinaryData("file", fileBytes, Path.GetFileName(imagePath));
+        form.AddBinaryData("file", fileBytes, fileName);
         using (var req = UnityWebRequest.Post(URI, form))
         {
             req.timeout = 10;
-            Debug.Log("[DataConnector] Sending request: " + URI);
+            // もし https + 自己署名証明書を許可したい場合は下記を追加（本番禁止）
+            // req.certificateHandler = new DevIgnoreCert();
+            Debug.Log("[DataConnector] Sending request bytes: " + URI);
             yield return req.SendWebRequest();
 
 #if UNITY_2020_2_OR_NEWER
@@ -65,7 +80,16 @@ public class DataConnector : IDataReceiver
             }
 
             PicturePoints pts;
-            pts = ParsePointCloud(data);
+            // try
+            // {
+                pts = ParsePointCloud(data);
+            // }
+            // catch (Exception ex)
+            // {
+            //     Debug.LogWarning("[DataConnector] Parse error: " + ex.Message);
+            //     callback?.Invoke(EmptyPoints());
+            //     yield break;
+            // }
             Debug.Log($"[DataConnector] Parsed points: {pts.GetPoints().Length}");
             callback?.Invoke(pts);
         }
@@ -73,32 +97,88 @@ public class DataConnector : IDataReceiver
 
     private static PicturePoints ParsePointCloud(byte[] bytes)
     {
-        int floatCount = bytes.Length / 4;
-        if (floatCount == 0 || floatCount % 6 != 0)
-            throw new Exception("Invalid float count: " + floatCount);
+        const int bytesPerPoint = 28 ; // 6 floats + 1 uint32
+        if (bytes.Length == 0 || bytes.Length % bytesPerPoint != 0)
+            throw new Exception("Invalid byte length: " + bytes.Length);
 
-        float[] floats = new float[floatCount];
-        Buffer.BlockCopy(bytes, 0, floats, 0, bytes.Length);
+        int pointCount = bytes.Length / bytesPerPoint;
 
-        int pointCount = floatCount / 6;
-        var points = new Point[pointCount];
+        var xs = new float[pointCount];
+        var ys = new float[pointCount];
+        var rs = new float[pointCount];
+        var gs = new float[pointCount];
+        var bs = new float[pointCount];
+        var ids = new int[pointCount];
 
+        int offset = 0;
+        bool needNormalize = false;
         for (int i = 0; i < pointCount; i++)
         {
-            int idx = i * 6;
-            float x = Clamp01(floats[idx]);
-            float y = Clamp01(floats[idx + 1]);
-            // z is at floats[idx + 2], but we ignore it.
-            float r = Clamp01(floats[idx + 3]);
-            float g = Clamp01(floats[idx + 4]);
-            float b = Clamp01(floats[idx + 5]);
+            float x = ReadLEFloat(bytes, ref offset);
+            float y = ReadLEFloat(bytes, ref offset);
+            float z = ReadLEFloat(bytes, ref offset); // z は未使用
+
+            float r = ReadLEFloat(bytes, ref offset);
+            float g = ReadLEFloat(bytes, ref offset);
+            float b = ReadLEFloat(bytes, ref offset);
+
+            uint rawId = ReadLEUInt(bytes, ref offset);
+
+            xs[i] = x;
+            ys[i] = y;
+            rs[i] = r;
+            gs[i] = g;
+            bs[i] = b;
+            ids[i] = (int)rawId;
+
+            if (x > 1f || y > 1f) needNormalize = true;
+        }
+
+        if (needNormalize)
+        {
+            float maxX = 0f, maxY = 0f;
+            for (int i = 0; i < pointCount; i++)
+            {
+                if (xs[i] > maxX) maxX = xs[i];
+                if (ys[i] > maxY) maxY = ys[i];
+            }
+            if (maxX <= 0f) maxX = 1f;
+            if (maxY <= 0f) maxY = 1f;
+            float invX = 1f / maxX;
+            float invY = 1f / maxY;
+            for (int i = 0; i < pointCount; i++)
+            {
+                xs[i] *= invX;
+                ys[i] *= invY;
+            }
+        }
+
+        var points = new Point[pointCount];
+        for (int i = 0; i < pointCount; i++)
+        {
             points[i] = new Point
             {
-                pos = new Vector2(x, y),
-                color = new Color(r, g, b, 1f)
+                pos = new Vector2(xs[i], ys[i]),          // 0〜1 に統一
+                color = new Color(rs[i], gs[i], bs[i], 1f),
+                id = ids[i]
             };
         }
-        return new PicturePoints(points, new Vector2Int(1, 1)); // 解像度仮
+
+        return new PicturePoints(points, new Vector2Int(1, 1));
+    }
+
+    private static float ReadLEFloat(byte[] src, ref int offset)
+    {
+        float v = BitConverter.ToSingle(src, offset);
+        offset += 4;
+        return v;
+    }
+
+    private static uint ReadLEUInt(byte[] src, ref int offset)
+    {
+        uint v = BitConverter.ToUInt32(src, offset);
+        offset += 4;
+        return v;
     }
 
     private static PicturePoints EmptyPoints() =>
@@ -106,22 +186,4 @@ public class DataConnector : IDataReceiver
 
     private static float Clamp01(float v) => v < 0f ? 0f : (v > 1f ? 1f : v);
 
-    private static string ResolveImagePath(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return null;
-        if (Path.IsPathRooted(name) && File.Exists(name)) return name;
-        if (File.Exists(name)) return Path.GetFullPath(name);
-
-        string sa = Path.Combine(Application.streamingAssetsPath, name);
-        if (File.Exists(sa)) return sa;
-
-        string pd = Path.Combine(Application.persistentDataPath, name);
-        if (File.Exists(pd)) return pd;
-
-#if UNITY_EDITOR
-        string assets = Path.Combine(Application.dataPath, name);
-        if (File.Exists(assets)) return assets;
-#endif
-        return null;
-    }
 }

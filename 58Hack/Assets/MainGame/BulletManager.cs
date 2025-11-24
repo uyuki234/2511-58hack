@@ -7,17 +7,29 @@ public class BulletManager
 {
     [SerializeField] private Mesh _mesh;
     [SerializeField] private Material _material;
-    private List<Bullet> _bullets;
+    public List<Bullet> _bullets;
     BulletRenderer _bulletRenderer;
     public void Init()
     {
         _bullets = new List<Bullet>();
         _bulletRenderer = new BulletRenderer(_mesh, _material);
     }
+    public bool GetIsPointInBullet(Vector2 point)
+    {
+        foreach (var bullet in _bullets)
+        {
+            if (Vector2.Distance(bullet.pos, point) < 0.25)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     public void Update(float deltaTime)
     {
         UpdateBullets(deltaTime);
-        _bulletRenderer.Render(_bullets);
+        if (_bullets.Count != 0)
+            _bulletRenderer.Render(_bullets);
     }
     public void AddBullet(Bullet bullet)
     {
@@ -58,7 +70,7 @@ internal class BulletRenderer
                 bullets[i].pos.y,
                 0f
             );
-            _matrices[i] = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one);
+            _matrices[i] = Matrix4x4.TRS(pos, Quaternion.identity, Vector3.one * 0.5f);
             colors[i] = new Vector4(bullets[i].color.r, bullets[i].color.g, bullets[i].color.b, 1f);
         }
         _propertyBlock.SetVectorArray("_Color", colors);
