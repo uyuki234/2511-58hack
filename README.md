@@ -10,6 +10,15 @@ curl https://two511-58hack-1.onrender.com/
 https://mtakira.github.io/fbh.io/  
 https://oshota501.github.io/game/FaceSpark.version.2.0/FaceSpark/
 
+・カメラを許可  
+・Takeボタンで顔か物を撮る  
+・Changeボタンでカメラの切り替え  
+・弾幕ゲーム  
+・ゲーム終了後、Returnボタンでリトライ
+
+※PCの方は、検証でスマホの画面にして遊んでください  
+※点群の精度は媒体のスペックに依存します
+
 # お手軽フォト弾幕ゲーム（線香チーム） — 58ハッカソン2025
 
 プロジェクト紹介ページ: https://topaz.dev/projects/045f4769cd99f4d895af  
