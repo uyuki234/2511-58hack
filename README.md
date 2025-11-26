@@ -7,6 +7,8 @@ curl https://two511-58hack-1.onrender.com/
 ```
 と入力した後、以下のリンクで遊ぶ
 
+もしくは、https://two511-58hack-1.onrender.com/ にアクセスした後に以下のリンクで遊ぶ
+
 https://mtakira.github.io/fbh.io/  
 https://oshota501.github.io/game/FaceSpark.version.2.0/FaceSpark/
 
