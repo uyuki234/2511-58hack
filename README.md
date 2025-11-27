@@ -1,3 +1,4 @@
+<!--
 ![title](https://topaz.dev/_next/image?url=https%3A%2F%2Fptera-publish.topaz.dev%2Fproject%2F01KAQAYNBNJZTMGZ9M2WFRN38W.png&w=1920&q=75)
 
 # 遊び方
@@ -8,7 +9,10 @@ curl https://two511-58hack-1.onrender.com/
 と入力した後、以下のリンクで遊ぶ
 
 もしくは、https://two511-58hack-1.onrender.com/ にアクセスした後に以下のリンクで遊ぶ
+-->
 
+こちらから遊べます  
+リンク先にアクセスして、1分ぐらい経ってから再読み込みしてください  
 https://mtakira.github.io/fbh.io/  
 https://oshota501.github.io/game/FaceSpark.version.2.0/FaceSpark/
 
@@ -19,7 +23,8 @@ https://oshota501.github.io/game/FaceSpark.version.2.0/FaceSpark/
 ・ゲーム終了後、Returnボタンでリトライ
 
 ※PCの方は、検証でスマホの画面にして遊んでください  
-※点群の精度は媒体のスペックに依存します
+※点群の精度は媒体のスペックに依存します  
+※RenderFreeがコールドスタートしてるので、アクセスしてもすぐには動かない…
 
 # お手軽フォト弾幕ゲーム（線香チーム） — 58ハッカソン2025
 
